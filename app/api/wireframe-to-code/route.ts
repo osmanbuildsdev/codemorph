@@ -67,3 +67,31 @@ export async function PUT(req: NextRequest) {
 
     return NextResponse.json(result);
 }
+
+export async function DELETE(req: NextRequest) {
+    const { searchParams } = new URL(req.url);
+    const uid = searchParams.get('uid');
+    
+    if (!uid) {
+        return NextResponse.json({ error: 'UID parameter is required' }, { status: 400 });
+    }
+
+    try {
+        const result = await db.delete(WireframeToCodeTable)
+            .where(eq(WireframeToCodeTable.uid, uid))
+            .returning({ uid: WireframeToCodeTable.uid });
+
+        if (result.length === 0) {
+            return NextResponse.json({ error: 'Record not found' }, { status: 404 });
+        }
+
+        return NextResponse.json({ 
+            success: true, 
+            message: 'Design deleted successfully', 
+            deletedUid: uid 
+        });
+    } catch (error) {
+        console.error('Error deleting design:', error);
+        return NextResponse.json({ error: 'Failed to delete design' }, { status: 500 });
+    }
+}
