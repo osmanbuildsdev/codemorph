@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select"
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
 import { storage } from '@/configs/firebaseConfig'
-import axios from 'axios'
+import { api } from '@/lib/api'
 import { uuid } from 'drizzle-orm/pg-core'
 import { useAuthContext } from '@/app/provider'
 import { useRouter } from 'next/navigation'
@@ -61,12 +61,11 @@ function ImageUpload() {
             const uid = uuid4();
             console.log(uid);
             // Save Info To Database
-            const result = await axios.post('/api/wireframe-to-code', {
+            const result = await api.post('/api/wireframe-to-code', {
                 uid: uid,
                 description: description,
                 imageUrl: imageUrl,
-                model: model,
-                email: user?.email
+                model: model
             });
             if (result.data?.error) {
                 console.log("Not Enough credits");

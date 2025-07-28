@@ -5,7 +5,7 @@ import { Code, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import React, { useState } from 'react'
-import axios from 'axios'
+import { api } from '@/lib/api'
 import { toast } from 'sonner'
 
 function DesignCard({ item, onDelete }: { item: RECORD, onDelete?: (uid: string) => void }) {
@@ -22,7 +22,7 @@ function DesignCard({ item, onDelete }: { item: RECORD, onDelete?: (uid: string)
         
         try {
             setIsDeleting(true);
-            const response = await axios.delete(`/api/wireframe-to-code?uid=${item.uid}`);
+            const response = await api.delete(`/api/wireframe-to-code?uid=${item.uid}`);
             
             if (response.data.success) {
                 toast.success('Tasarım başarıyla silindi');

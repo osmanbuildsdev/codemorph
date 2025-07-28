@@ -1,7 +1,7 @@
 "use client"
 import { useAuthContext } from '@/app/provider'
 import { Button } from '@/components/ui/button'
-import axios from 'axios'
+import { api } from '@/lib/api'
 import React, { useEffect, useState } from 'react'
 
 function Credits() {
@@ -13,7 +13,7 @@ function Credits() {
     }, [user])
 
     const GetUserCredits = async () => {
-        const result = await axios.get('/api/user?email=' + user?.email);
+        const result = await api.get('/api/user');
         console.log(result.data)
         setUserData(result.data);
     }
@@ -45,7 +45,7 @@ function Credits() {
                 selectedPlan: selectedPlan === 'basic' ? 'Başlangıç' : selectedPlan === 'standard' ? 'Standart' : 'Premium',
                 userId: user?.uid,
                 userEmail: user?.email,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
             };
             
             // Verileri konsola yazdıralım (test amaçlı)

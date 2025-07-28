@@ -16,7 +16,7 @@ import { Calendar, CircleDollarSign, Home, Inbox, Paintbrush, Search, Settings, 
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useAuthContext } from '../provider'
-import axios from 'axios'
+import { api } from '@/lib/api'
 
 const items = [
     {
@@ -48,7 +48,7 @@ export function AppSidebar() {
 
     const fetchUserCredits = async () => {
         try {
-            const result = await axios.get('/api/user?email=' + user?.email);
+            const result = await api.get('/api/user');
             setCredits(result.data?.credits || 0);
         } catch (error) {
             console.error('Error fetching credits:', error);
