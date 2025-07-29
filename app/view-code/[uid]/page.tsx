@@ -1,7 +1,7 @@
 "use client"
 import AppHeader from '@/app/_components/AppHeader'
-import Constants from '@/data/Constants'
-import axios from 'axios'
+import { api, authHeader } from '@/lib/api'
+import { useAuthContext } from '@/app/provider'
 import { ArrowLeft, Loader2, LoaderCircle } from 'lucide-react'
 import { useParams, usePathname, useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
@@ -24,6 +24,7 @@ export interface RECORD {
 function ViewCode() {
 
     const { uid } = useParams();
+    const { user } = useAuthContext();
     const [loading, setLoading] = useState(false);
     const [codeResp, setCodeResp] = useState('');
     const [record, setRecord] = useState<RECORD | null>();
@@ -31,10 +32,10 @@ function ViewCode() {
     // const [isExistingCode,setIsExistingCode]=useState();
     useEffect(() => {
         if (typeof window !== undefined) {
-            uid && GetRecordInfo();
+            uid && user && GetRecordInfo();
 
         }
-    }, [uid])
+    }, [uid, user])
 
     const GetRecordInfo = async (regen = false) => {
         console.log("RUN...")
@@ -42,7 +43,7 @@ function ViewCode() {
         setCodeResp('');
         setLoading(true)
 
-        const result = await axios.get('/api/wireframe-to-code?uid=' + uid)
+        const result = await api.get('/api/wireframe-to-code?uid=' + uid)
 
         const resp = result?.data;
         setRecord(result?.data)
@@ -65,12 +66,8 @@ function ViewCode() {
         setLoading(true)
         const res = await fetch('/api/ai-model', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                description: record?.description + ":" + Constants.PROMPT,
-                model: record.model,
-                imageUrl: record?.imageUrl
-            })
+            headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+            body: JSON.stringify({ uid: record?.uid })
         });
 
         if (!res.body) return;
@@ -100,7 +97,7 @@ function ViewCode() {
 
     const UpdateCodeToDb = async () => {
         console.log(record)
-        const result = await axios.put('/api/wireframe-to-code', {
+        const result = await api.put('/api/wireframe-to-code', {
             uid: record?.uid,
             codeResp: { resp: codeResp }
         });

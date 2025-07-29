@@ -1,5 +1,9 @@
 import Constants from "@/data/Constants";
-import { NextRequest } from "next/server";
+import { db } from "@/configs/db";
+import { WireframeToCodeTable } from "@/configs/schema";
+import { getAuthUser, unauthorized } from "@/lib/auth";
+import { and, eq } from "drizzle-orm";
+import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai"
 const openai = new OpenAI({
     baseURL: "https://openrouter.ai/api/v1",
@@ -9,12 +13,24 @@ const openai = new OpenAI({
 export const maxDuration = 300;
 
 export async function POST(req: NextRequest) {
+    const authUser = await getAuthUser(req);
+    if (!authUser) return unauthorized();
 
-    const { model, description, imageUrl } = await req.json();
+    // The prompt is built on the server from the user's own saved record,
+    // so this route cannot be used as an open proxy to the AI provider.
+    const { uid } = await req.json();
+    const records = await db.select().from(WireframeToCodeTable)
+        .where(and(
+            eq(WireframeToCodeTable.uid, uid),
+            eq(WireframeToCodeTable.createdBy, authUser.email)
+        ));
+    const record = records[0];
+    if (!record) {
+        return NextResponse.json({ error: 'No Record Found' }, { status: 404 });
+    }
 
-    const ModelObj = Constants.AiModelList.find(item => item.name == model)
+    const ModelObj = Constants.AiModelList.find(item => item.name == record.model)
     const modelName = ModelObj?.modelName;
-    console.log(modelName);
     const response = await openai.chat.completions.create({
         model: modelName ?? 'google/gemini-2.0-pro-exp-02-05:free',
         stream: true,
@@ -24,12 +40,12 @@ export async function POST(req: NextRequest) {
                 "content": [
                     {
                         "type": "text",
-                        "text": description
+                        "text": record.description + ":" + Constants.PROMPT
                     },
                     {
                         "type": "image_url",
                         "image_url": {
-                            "url": imageUrl
+                            "url": record.imageUrl ?? ''
                         }
                     }
                 ]
